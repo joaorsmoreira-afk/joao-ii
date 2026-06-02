@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="João II">
+<title>João II</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0d0d0d;color:#e8e4dc;font-family:Georgia,serif;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* SETUP */
+#setup{position:fixed;inset:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;gap:14px;z-index:999}
+.s-logo{font-size:56px;color:#c8a96e;font-style:italic}
+.s-sub{font-family:monospace;font-size:10px;color:#555;letter-spacing:0.18em;text-transform:uppercase;margin-top:-6px}
+.s-label{font-family:monospace;font-size:10px;color:#c8a96e;letter-spacing:0.12em;text-transform:uppercase;align-self:flex-start;width:100%;max-width:340px;margin-top:8px}
+.s-input{width:100%;max-width:340px;background:#111;border:1px solid #333;color:#e8e4dc;font-family:monospace;font-size:13px;padding:13px;outline:none;border-radius:0;-webkit-appearance:none;transition:border-color .2s}
+.s-input:focus{border-color:#c8a96e}
+.s-note{font-family:monospace;font-size:10px;color:#444;line-height:1.65;width:100%;max-width:340px}
+.s-btn{width:100%;max-width:340px;background:#c8a96e;border:none;color:#0d0d0d;font-family:monospace;font-size:12px;letter-spacing:0.12em;padding:15px;cursor:pointer;border-radius:0;-webkit-appearance:none;text-transform:uppercase;margin-top:6px}
+#serr{color:#c47a6a;font-size:11px;display:none;font-family:monospace}
+
+/* APP */
+#app{display:none;flex-direction:column;height:100vh;height:-webkit-fill-available}
+
+/* HEADER */
+header{padding:13px 18px;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hlogo{font-style:italic;font-size:21px;color:#c8a96e}
+.hsub{font-family:monospace;font-size:9px;color:#555;letter-spacing:0.12em;text-transform:uppercase}
+.hright{display:flex;align-items:center;gap:10px}
+.dot{width:7px;height:7px;border-radius:50%;background:#7c9e87;box-shadow:0 0 8px #7c9e87;animation:pu 2.5s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:0.2}}
+.icobtn{background:none;border:none;color:#666;font-size:15px;cursor:pointer;padding:4px 6px;font-family:monospace}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid #1a1a1a;flex-shrink:0;background:#0f0f0f;overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-family:monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:9px 14px;border:none;background:transparent;color:#555;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0}
+.tab.on{color:#c8a96e;border-bottom-color:#c8a96e}
+
+/* PANELS */
+.panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.panel.on{display:flex}
+
+/* MEMORY DRAWER */
+.drawer{overflow:hidden;transition:max-height .3s ease;background:#111;border-bottom:1px solid #1a1a1a;flex-shrink:0}
+.din{padding:13px 18px 15px}
+.dlabel{font-family:monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#c8a96e;margin-bottom:8px}
+.dmem{width:100%;height:95px;background:#0d0d0d;border:1px solid #222;color:#aaa;font-family:monospace;font-size:12px;line-height:1.7;padding:9px;resize:none;outline:none;border-radius:0;-webkit-appearance:none}
+.dmem:focus{border-color:#c8a96e}
+.dbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.dbtn{font-family:monospace;font-size:11px;padding:6px 13px;border:1px solid #333;background:transparent;color:#888;cursor:pointer;border-radius:0}
+.dbtn.ok{border-color:#c8a96e;color:#c8a96e}
+
+/* CHAT */
+#chat{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;display:flex;flex-direction:column;gap:13px}
+#chat::-webkit-scrollbar{display:none}
+.msg{display:flex;gap:9px}
+.msg.u{flex-direction:row-reverse}
+.av{width:27px;height:27px;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-style:italic;font-size:11px;font-weight:bold;margin-top:2px}
+.av.ai{background:rgba(200,169,110,.1);color:#c8a96e;border:1px solid rgba(200,169,110,.2)}
+.av.u{background:rgba(124,158,135,.1);color:#7c9e87;border:1px solid rgba(124,158,135,.2)}
+.bub{max-width:80%;padding:10px 13px;font-size:15px;font-weight:300;line-height:1.8}
+.msg:not(.u) .bub{background:#141414;border:1px solid #1e1e1e;border-left:2px solid #c8a96e}
+.msg.u .bub{background:#111;border:1px solid #1e1e1e;border-right:2px solid #7c9e87;text-align:right}
+.meta{font-family:monospace;font-size:10px;color:#444;margin-bottom:4px}
+.msg.u .meta{text-align:right}
+.dots{display:flex;gap:5px;align-items:center;padding:4px 0}
+.dots span{width:6px;height:6px;border-radius:50%;background:#c8a96e;opacity:.3;animation:th 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes th{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
+.note{text-align:center;font-family:monospace;font-size:10px;color:#c8a96e;opacity:.6}
+.sumbox{border:1px solid rgba(200,169,110,.2);padding:13px;flex:1}
+.sumtitle{font-family:monospace;font-size:10px;text-transform:uppercase;color:#c8a96e;margin-bottom:8px;letter-spacing:.1em}
+.sumtext{font-family:monospace;font-size:12px;color:#999;line-height:1.8;white-space:pre-wrap}
+.copybtn{font-family:monospace;font-size:10px;padding:4px 10px;border:1px solid rgba(200,169,110,.3);background:transparent;color:#c8a96e;cursor:pointer;margin-top:9px;display:block;margin-left:auto}
+
+/* IMAGE PREVIEW IN CHAT */
+.img-preview{max-width:200px;max-height:200px;border:1px solid #333;display:block;margin-bottom:6px}
+
+/* INPUT AREA */
+.iarea{padding:10px 18px 16px;border-top:1px solid #1a1a1a;flex-shrink:0;background:#0d0d0d}
+.irow{display:flex;gap:7px;align-items:flex-end}
+.itools{display:flex;gap:5px;margin-bottom:7px}
+.itool{font-family:monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border:1px solid #222;background:transparent;color:#555;cursor:pointer;border-radius:0;transition:all .2s}
+.itool:hover{border-color:#c8a96e;color:#c8a96e}
+#inp{flex:1;background:#111;border:1px solid #222;color:#e8e4dc;font-family:Georgia,serif;font-size:16px;padding:11px 13px;resize:none;outline:none;min-height:44px;max-height:110px;line-height:1.5;border-radius:0;-webkit-appearance:none;transition:border-color .2s}
+#inp:focus{border-color:#c8a96e}
+#inp::placeholder{color:#444;font-style:italic}
+#sendbtn{width:44px;height:44px;background:#c8a96e;border:none;color:#0d0d0d;font-size:21px;cursor:pointer;flex-shrink:0;border-radius:0;-webkit-appearance:none;display:flex;align-items:center;justify-content:center}
+#sendbtn:disabled{background:#222;color:#444}
+#fileinput{display:none}
+
+/* ATTACH PREVIEW */
+#attachprev{display:none;padding:7px 0;gap:8px;align-items:center;flex-wrap:wrap}
+.atch-item{position:relative;display:inline-flex}
+.atch-img{width:52px;height:52px;object-fit:cover;border:1px solid #333}
+.atch-file{background:#111;border:1px solid #333;padding:6px 10px;font-family:monospace;font-size:10px;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.atch-rm{position:absolute;top:-5px;right:-5px;width:16px;height:16px;background:#c47a6a;border:none;color:white;font-size:10px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* TOOLS PANEL */
+#toolspanel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.tool-card{background:#111;border:1px solid #222;padding:14px 16px}
+.tool-title{font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c8a96e;margin-bottom:10px}
+.tool-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.tool-label{font-family:monospace;font-size:11px;color:#888;width:100px;flex-shrink:0}
+.tool-input{flex:1;background:#0d0d0d;border:1px solid #222;color:#e8e4dc;font-family:monospace;font-size:13px;padding:7px 10px;outline:none;border-radius:0;-webkit-appearance:none}
+.tool-input:focus{border-color:#c8a96e}
+.tool-select{flex:1;background:#0d0d0d;border:1px solid #222;color:#e8e4dc;font-family:monospace;font-size:13px;padding:7px 10px;outline:none;border-radius:0;-webkit-appearance:none}
+.tool-btn{width:100%;background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.25);color:#c8a96e;font-family:monospace;font-size:11px;letter-spacing:.08em;padding:9px;cursor:pointer;text-transform:uppercase;margin-top:4px;border-radius:0}
+.tool-btn:active{background:rgba(200,169,110,.15)}
+.tool-result{background:#0d0d0d;border:1px solid #1a1a1a;padding:10px;font-family:monospace;font-size:12px;color:#aaa;line-height:1.8;margin-top:8px;display:none;white-space:pre-wrap}
+
+/* PLANNER PANEL */
+#plannerpanel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px}
+.plan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.plan-title-text{font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c8a96e}
+.plan-add{font-family:monospace;font-size:10px;padding:5px 12px;border:1px solid rgba(200,169,110,.3);background:transparent;color:#c8a96e;cursor:pointer;border-radius:0}
+.task-item{background:#111;border:1px solid #222;padding:11px 13px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.task-check{width:16px;height:16px;border:1px solid #444;flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:#7c9e87}
+.task-check.done{background:rgba(124,158,135,.15);border-color:#7c9e87}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:14px;font-weight:300;line-height:1.5}
+.task-name.done{text-decoration:line-through;color:#555}
+.task-meta{font-family:monospace;font-size:10px;color:#555;margin-top:3px}
+.task-del{background:none;border:none;color:#444;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0}
+.plan-empty{font-family:monospace;font-size:11px;color:#444;text-align:center;padding:30px 0}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:#111;border:1px solid #2a2a2a;border-top:2px solid #c8a96e;padding:22px 24px;width:100%;max-width:380px}
+.modal h3{font-family:monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#c8a96e;margin-bottom:14px}
+.modal input,.modal textarea{width:100%;background:#0d0d0d;border:1px solid #222;color:#e8e4dc;font-family:Georgia,serif;font-size:14px;padding:10px;outline:none;border-radius:0;-webkit-appearance:none;margin-bottom:8px}
+.modal textarea{height:70px;resize:none}
+.modal select{width:100%;background:#0d0d0d;border:1px solid #222;color:#e8e4dc;font-family:monospace;font-size:13px;padding:10px;outline:none;border-radius:0;-webkit-appearance:none;margin-bottom:8px}
+.modal-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.mbtn{font-family:monospace;font-size:11px;padding:7px 14px;border:1px solid #333;background:transparent;color:#888;cursor:pointer;border-radius:0}
+.mbtn.ok{border-color:#c8a96e;color:#c8a96e}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="s-logo">J²</div>
+  <div class="s-sub">Assistente Pessoal · Evolução Contínua</div>
+  <div class="s-label">API Key Anthropic</div>
+  <input class="s-input" type="password" id="keyinput" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+  <div id="serr">Key inválida. Deve começar com sk-ant-</div>
+  <div class="s-note">Obtém a tua key em platform.anthropic.com → API Keys.<br>Guardada apenas no teu dispositivo.</div>
+  <button class="s-btn" onclick="startApp()">Entrar no João II →</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div>
+      <div class="hlogo">João II</div>
+      <div class="hsub">Evolução Contínua</div>
+    </div>
+    <div class="hright">
+      <div class="dot"></div>
+      <button class="icobtn" onclick="toggleMem()">◈</button>
+      <button class="icobtn" onclick="resetKey()">⚙</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('chat',this)">◎ Conversa</button>
+    <button class="tab" onclick="switchTab('tools',this)">⚒ Ferramentas</button>
+    <button class="tab" onclick="switchTab('planner',this)">◻ Projetos</button>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="panel on" id="chatpanel">
+    <div class="drawer" id="drawer" style="max-height:0">
+      <div class="din">
+        <div class="dlabel">Diário de Evolução</div>
+        <textarea class="dmem" id="memtext" placeholder="Cola o resumo da sessão anterior...
+Ex: — Frame 2000×1000mm, RHS 20×30×1.5mm
+— Próximo: testar corte disco 125mm"></textarea>
+        <div class="dbtns">
+          <button class="dbtn" onclick="toggleMem()">Fechar</button>
+          <button class="dbtn ok" onclick="applyMem()">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="chat"></div>
+
+    <div class="iarea">
+      <div class="itools">
+        <button class="itool" onclick="document.getElementById('fileinput').click()">📎 Ficheiro</button>
+        <button class="itool" onclick="capturePhoto()">📷 Foto</button>
+        <button class="itool" onclick="doSummary()">◎ Resumo</button>
+        <button class="itool" onclick="newSession()">✕ Nova</button>
+      </div>
+      <div id="attachprev"></div>
+      <input type="file" id="fileinput" accept="image/*,application/pdf,.txt,.md,.csv" multiple onchange="handleFiles(this.files)">
+      <div class="irow">
+        <textarea id="inp" rows="1" placeholder="Uma pergunta, ideia ou problema..."
+          oninput="resize(this)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+        <button id="sendbtn" onclick="send()">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLS PANEL -->
+  <div class="panel" id="toolspanel">
+
+    <!-- Calculadora de Cortes -->
+    <div class="tool-card">
+      <div class="tool-title">✂ Calculadora de Cortes de Metal</div>
+      <div class="tool-row">
+        <span class="tool-label">Comprimento barra</span>
+        <input class="tool-input" id="t_barlen" type="number" placeholder="6000" value="6000"> <span style="font-family:monospace;font-size:11px;color:#666;margin-left:4px">mm</span>
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Tamanho peça</span>
+        <input class="tool-input" id="t_piecelen" type="number" placeholder="500"> <span style="font-family:monospace;font-size:11px;color:#666;margin-left:4px">mm</span>
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Nº peças</span>
+        <input class="tool-input" id="t_qty" type="number" placeholder="10" value="1">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Perda por corte</span>
+        <input class="tool-input" id="t_kerf" type="number" placeholder="3" value="3"> <span style="font-family:monospace;font-size:11px;color:#666;margin-left:4px">mm</span>
+      </div>
+      <button class="tool-btn" onclick="calcCortes()">Calcular</button>
+      <div class="tool-result" id="r_cortes"></div>
+    </div>
+
+    <!-- Estimativa de Materiais -->
+    <div class="tool-card">
+      <div class="tool-title">⚖ Estimativa de Peso / Custo</div>
+      <div class="tool-row">
+        <span class="tool-label">Perfil</span>
+        <select class="tool-select" id="t_profile">
+          <option value="rhs">RHS (tubo rect.)</option>
+          <option value="shs">SHS (tubo quad.)</option>
+          <option value="angle">Cantoneira</option>
+          <option value="flat">Chapa plana</option>
+          <option value="rod">Varão redondo</option>
+        </select>
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Dim. A (mm)</span>
+        <input class="tool-input" id="t_dimA" type="number" placeholder="40">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Dim. B (mm)</span>
+        <input class="tool-input" id="t_dimB" type="number" placeholder="20">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Espessura (mm)</span>
+        <input class="tool-input" id="t_thick" type="number" placeholder="2">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Comprimento (m)</span>
+        <input class="tool-input" id="t_mlen" type="number" placeholder="6">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Qtd barras</span>
+        <input class="tool-input" id="t_bars" type="number" placeholder="1" value="1">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">€/kg (opcional)</span>
+        <input class="tool-input" id="t_price" type="number" placeholder="1.20" step="0.01">
+      </div>
+      <button class="tool-btn" onclick="calcPeso()">Calcular Peso / Custo</button>
+      <div class="tool-result" id="r_peso"></div>
+    </div>
+
+    <!-- Conversor de Unidades -->
+    <div class="tool-card">
+      <div class="tool-title">↔ Conversor de Unidades</div>
+      <div class="tool-row">
+        <span class="tool-label">Valor</span>
+        <input class="tool-input" id="t_cval" type="number" placeholder="100">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">De</span>
+        <select class="tool-select" id="t_cfrom">
+          <option value="mm">mm</option><option value="cm">cm</option><option value="m">m</option>
+          <option value="inch">polegadas</option><option value="ft">pés</option>
+          <option value="kg">kg</option><option value="lb">lb</option>
+        </select>
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Para</span>
+        <select class="tool-select" id="t_cto">
+          <option value="inch">polegadas</option><option value="cm">cm</option><option value="m">m</option>
+          <option value="mm">mm</option><option value="ft">pés</option>
+          <option value="kg">kg</option><option value="lb">lb</option>
+        </select>
+      </div>
+      <button class="tool-btn" onclick="calcConv()">Converter</button>
+      <div class="tool-result" id="r_conv"></div>
+    </div>
+
+    <!-- Calculadora de Ângulos -->
+    <div class="tool-card">
+      <div class="tool-title">📐 Calculadora de Ângulos / Diagonal</div>
+      <div class="tool-row">
+        <span class="tool-label">Largura (mm)</span>
+        <input class="tool-input" id="t_aw" type="number" placeholder="1000">
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Altura (mm)</span>
+        <input class="tool-input" id="t_ah" type="number" placeholder="500">
+      </div>
+      <button class="tool-btn" onclick="calcAngulo()">Calcular Diagonal e Ângulos</button>
+      <div class="tool-result" id="r_ang"></div>
+    </div>
+
+  </div>
+
+  <!-- PLANNER PANEL -->
+  <div class="panel" id="plannerpanel">
+    <div style="padding:16px 18px">
+      <div class="plan-header">
+        <span class="plan-title-text">◻ Projetos e Tarefas</span>
+        <button class="plan-add" onclick="showAddTask()">+ Adicionar</button>
+      </div>
+      <div id="tasklist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="taskmodal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <h3>Nova Tarefa / Projeto</h3>
+    <input id="task_name" placeholder="Nome da tarefa..." autocorrect="off">
+    <textarea id="task_notes" placeholder="Notas (opcional)..."></textarea>
+    <select id="task_cat">
+      <option value="metal">Metalurgia / Fabricação</option>
+      <option value="diy">DIY / Construção</option>
+      <option value="learn">Aprendizagem</option>
+      <option value="buy">Compras / Materiais</option>
+      <option value="other">Outro</option>
+    </select>
+    <div class="modal-btns">
+      <button class="mbtn" onclick="document.getElementById('taskmodal').style.display='none'">Cancelar</button>
+      <button class="mbtn ok" onclick="addTask()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SYS=`És o João II — assistente pessoal dedicado exclusivamente a João.
+Acompanhas a evolução de João em TUDO — projetos, conhecimento, habilidades, vida.
+Direto, inteligente, honesto. Sem rodeios. Adaptas língua ao que for melhor (PT/EN/mix).
+Quando recebes imagens ou documentos, analisas em detalhe e respondes com substância.
+Nunca partilhas dados de João com terceiros. Cada resposta faz João avançar.
+João trabalha com metalurgia e fabricação DIY (frames, estruturas em aço).
+Curioso sobre tudo. Prefere profundidade a superficialidade.`;
+
+let key='',msgs=[],memory='',busy=false,memOpen=false;
+let attachments=[];
+let tasks=[];
+
+// INIT
+window.onload=()=>{
+  const k=localStorage.getItem('j2key');
+  if(k){key=k;go();}
+  loadTasks();
+};
+
+function startApp(){
+  const k=document.getElementById('keyinput').value.trim();
+  if(!k.startsWith('sk-ant-')){document.getElementById('serr').style.display='block';return;}
+  document.getElementById('serr').style.display='none';
+  key=k;
+  try{localStorage.setItem('j2key',k);}catch(x){}
+  go();
+}
+
+function go(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='flex';
+  addAI('Olá João. Sou o João II v2.\n\nAgora podes enviar-me **imagens** e **ficheiros** — fotos de projetos, PDFs técnicos, o que precisares.\n\nTambém tens **ferramentas** (calculadora de cortes, peso, ângulos) e um **planner** de projetos.\n\nO que está na mesa hoje?');
+}
+
+function resetKey(){
+  if(confirm('Mudar API Key?')){localStorage.removeItem('j2key');location.reload();}
+}
+
+// TABS
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(name+'panel').classList.add('on');
+  if(name==='chat') document.getElementById('chatpanel').classList.add('on');
+}
+
+// MEMORY
+function toggleMem(){
+  memOpen=!memOpen;
+  document.getElementById('drawer').style.maxHeight=memOpen?'230px':'0';
+}
+function applyMem(){
+  memory=document.getElementById('memtext').value.trim();
+  toggleMem();
+  if(memory) note('Memória aplicada.');
+}
+
+// SESSION
+function newSession(){
+  if(msgs.length<2||confirm('Nova sessão?')){
+    msgs=[];memory='';attachments=[];
+    document.getElementById('chat').innerHTML='';
+    document.getElementById('attachprev').style.display='none';
+    document.getElementById('attachprev').innerHTML='';
+    addAI('Nova sessão. O que está na mesa hoje?');
+  }
+}
+
+// FILE HANDLING
+function handleFiles(files){
+  for(const f of files){
+    if(f.type.startsWith('image/')){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        attachments.push({type:'image',name:f.name,data:e.target.result,mediaType:f.type});
+        renderAttachPreview();
+      };
+      reader.readAsDataURL(f);
+    } else if(f.type==='application/pdf'||f.name.endsWith('.pdf')){
+      const reader=new FileReader();
+      reader.onload=e=>{
+        attachments.push({type:'pdf',name:f.name,data:e.target.result});
+        renderAttachPreview();
+      };
+      reader.readAsDataURL(f);
+    } else {
+      const reader=new FileReader();
+      reader.onload=e=>{
+        attachments.push({type:'text',name:f.name,data:e.target.result});
+        renderAttachPreview();
+      };
+      reader.readAsText(f);
+    }
+  }
+  document.getElementById('fileinput').value='';
+}
+
+function capturePhoto(){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.onchange=e=>handleFiles(e.target.files);
+  inp.click();
+}
+
+function renderAttachPreview(){
+  const prev=document.getElementById('attachprev');
+  prev.style.display=attachments.length?'flex':'none';
+  prev.innerHTML='';
+  attachments.forEach((a,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='atch-item';
+    if(a.type==='image'){
+      wrap.innerHTML=`<img class="atch-img" src="${a.data}"><button class="atch-rm" onclick="removeAttach(${i})">×</button>`;
+    } else {
+      wrap.innerHTML=`<div class="atch-file">${a.type==='pdf'?'📄':'📝'} ${a.name}</div><button class="atch-rm" onclick="removeAttach(${i})">×</button>`;
+    }
+    prev.appendChild(wrap);
+  });
+}
+
+function removeAttach(i){
+  attachments.splice(i,1);
+  renderAttachPreview();
+}
+
+// CHAT HELPERS
+function note(t){
+  const d=document.createElement('div');d.className='note';d.textContent='— '+t+' —';
+  document.getElementById('chat').appendChild(d);scroll();
+}
+function fmt(t){
+  return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`(.*?)`/g,'<code style="font-family:monospace;font-size:12px;background:#1a1a1a;padding:1px 4px">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+function addAI(txt){
+  const t=new Date().toLocaleTimeString('pt',{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');d.className='msg';
+  d.innerHTML=`<div class="av ai">J²</div><div class="bub"><div class="meta">João II · ${t}</div><div>${fmt(txt)}</div></div>`;
+  document.getElementById('chat').appendChild(d);scroll();
+}
+function addUser(txt,imgs){
+  const t=new Date().toLocaleTimeString('pt',{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');d.className='msg u';
+  let imgHtml='';
+  if(imgs&&imgs.length) imgs.forEach(i=>{imgHtml+=`<img class="img-preview" src="${i.data}">`;});
+  d.innerHTML=`<div class="av u">J</div><div class="bub"><div class="meta">${t}</div>${imgHtml}<div>${fmt(txt||'')}</div></div>`;
+  document.getElementById('chat').appendChild(d);scroll();
+}
+function showThinking(){
+  const d=document.createElement('div');d.className='msg';d.id='th';
+  d.innerHTML=`<div class="av ai">J²</div><div class="bub"><div class="dots"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chat').appendChild(d);scroll();
+}
+function hideThinking(){document.getElementById('th')?.remove();}
+function scroll(){setTimeout(()=>{const c=document.getElementById('chat');c.scrollTop=c.scrollHeight;},60);}
+function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+
+// API CALL
+async function callAPI(messages){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1500,system:SYS,messages})
+  });
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.error?.message||'Erro '+r.status);
+  return d.content?.[0]?.text||'';
+}
+
+// BUILD API MESSAGES WITH ATTACHMENTS
+function buildContent(txt,atts){
+  if(!atts||!atts.length) return txt||'';
+  const parts=[];
+  atts.forEach(a=>{
+    if(a.type==='image'){
+      const b64=a.data.split(',')[1];
+      parts.push({type:'image',source:{type:'base64',media_type:a.mediaType,data:b64}});
+    } else if(a.type==='pdf'){
+      const b64=a.data.split(',')[1];
+      parts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}});
+    } else {
+      parts.push({type:'text',text:`[FICHEIRO: ${a.name}]\n${a.data}`});
+    }
+  });
+  if(txt) parts.push({type:'text',text:txt});
+  return parts;
+}
+
+// SEND MESSAGE
+async function send(){
+  const el=document.getElementById('inp');
+  const txt=el.value.trim();
+  const atts=[...attachments];
+  if(!txt&&!atts.length||busy) return;
+  busy=true;
+  document.getElementById('sendbtn').disabled=true;
+  el.value='';el.style.height='auto';
+  attachments=[];
+  document.getElementById('attachprev').style.display='none';
+  document.getElementById('attachprev').innerHTML='';
+
+  const imgAtts=atts.filter(a=>a.type==='image');
+  addUser(txt,imgAtts);
+
+  const content=buildContent(txt,atts);
+  msgs.push({role:'user',content});
+  showThinking();
+
+  // Build API messages with memory on first msg
+  const apiMsgs=msgs.map((m,i)=>{
+    if(i===0&&memory&&typeof m.content==='string')
+      return{role:'user',content:`[CONTEXTO ANTERIOR]\n${memory}\n\n[MENSAGEM]\n${m.content}`};
+    return{role:m.role==='ai'?'assistant':'user',content:m.content};
+  });
+
+  try{
+    const rep=await callAPI(apiMsgs);
+    hideThinking();
+    msgs.push({role:'ai',content:rep});
+    addAI(rep);
+  }catch(e){
+    hideThinking();
+    addAI('Erro: '+e.message);
+  }
+  busy=false;
+  document.getElementById('sendbtn').disabled=false;
+}
+
+// SUMMARY
+async function doSummary(){
+  const c=msgs.filter(m=>typeof m.content==='string');
+  if(c.length<2){note('Precisas de pelo menos uma troca.');return;}
+  busy=true;showThinking();
+  const today=new Date().toLocaleDateString('pt');
+  const am=[...c.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content})),
+    {role:'user',content:`Gera um resumo estruturado:\nSESSÃO: ${today}\n─────────────────\nTÓPICOS:\n• [lista]\nPROGRESSOS:\n• [o que foi discutido]\nPRÓXIMOS PASSOS:\n• [pendentes]\nNOTAS:\n• [info chave]`}];
+  try{
+    const s=await callAPI(am);
+    hideThinking();
+    const t=new Date().toLocaleTimeString('pt',{hour:'2-digit',minute:'2-digit'});
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;gap:9px';
+    d.innerHTML=`<div class="av ai">J²</div><div class="sumbox"><div class="sumtitle">◈ Resumo · ${t}</div><div class="sumtext">${s.replace(/</g,'&lt;')}</div><button class="copybtn" onclick="cp(this,${JSON.stringify(s)})">Copiar</button></div>`;
+    document.getElementById('chat').appendChild(d);scroll();
+  }catch(e){note('Erro: '+e.message);}
+  busy=false;
+}
+
+function cp(btn,txt){
+  navigator.clipboard.writeText(txt).then(()=>{btn.textContent='✓ Copiado!';setTimeout(()=>btn.textContent='Copiar',2000);});
+}
+
+// ── TOOLS ──
+
+function calcCortes(){
+  const barLen=parseFloat(document.getElementById('t_barlen').value)||6000;
+  const pieceLen=parseFloat(document.getElementById('t_piecelen').value);
+  const qty=parseInt(document.getElementById('t_qty').value)||1;
+  const kerf=parseFloat(document.getElementById('t_kerf').value)||3;
+  const r=document.getElementById('r_cortes');
+  if(!pieceLen){r.style.display='block';r.textContent='Introduz o tamanho da peça.';return;}
+  const pieceWithKerf=pieceLen+kerf;
+  const piecesPerBar=Math.floor((barLen+kerf)/pieceWithKerf);
+  const barsNeeded=Math.ceil(qty/piecesPerBar);
+  const totalUsed=qty*pieceLen+(qty-1)*kerf;
+  const totalMaterial=barsNeeded*barLen;
+  const waste=totalMaterial-totalUsed;
+  const wastePerc=((waste/totalMaterial)*100).toFixed(1);
+  r.style.display='block';
+  r.textContent=`Peças por barra: ${piecesPerBar}\nBarras necessárias: ${barsNeeded}\nMaterial usado: ${totalUsed}mm\nDesperdício: ${waste}mm (${wastePerc}%)\nSobra última barra: ${(barsNeeded*barLen - qty*pieceLen - (qty*kerf))}mm`;
+}
+
+function calcPeso(){
+  const profile=document.getElementById('t_profile').value;
+  const A=parseFloat(document.getElementById('t_dimA').value)||0;
+  const B=parseFloat(document.getElementById('t_dimB').value)||0;
+  const t=parseFloat(document.getElementById('t_thick').value)||0;
+  const len=parseFloat(document.getElementById('t_mlen').value)||0;
+  const bars=parseFloat(document.getElementById('t_bars').value)||1;
+  const price=parseFloat(document.getElementById('t_price').value)||0;
+  const r=document.getElementById('r_peso');
+  const rho=7.85; // g/cm³ aço
+  let area=0; // mm²
+  if(profile==='rhs') area=(A*B)-((A-2*t)*(B-2*t));
+  else if(profile==='shs') area=A*A-(A-2*t)*(A-2*t);
+  else if(profile==='angle') area=2*A*t-t*t;
+  else if(profile==='flat') area=A*B;
+  else if(profile==='rod') area=Math.PI*(A/2)*(A/2);
+  if(!area){r.style.display='block';r.textContent='Preenche as dimensões.';return;}
+  const vol_cm3=(area/100)*len*bars; // cm³
+  const weight=vol_cm3*rho/1000; // kg
+  const cost=price?weight*price:0;
+  r.style.display='block';
+  r.textContent=`Secção transversal: ${area.toFixed(1)} mm²\nPeso total: ${weight.toFixed(2)} kg${cost?`\nCusto estimado: €${cost.toFixed(2)}`:''}`;
+}
+
+function calcConv(){
+  const val=parseFloat(document.getElementById('t_cval').value);
+  const from=document.getElementById('t_cfrom').value;
+  const to=document.getElementById('t_cto').value;
+  const r=document.getElementById('r_conv');
+  if(isNaN(val)){r.style.display='block';r.textContent='Introduz um valor.';return;}
+  const toMM={mm:1,cm:10,m:1000,inch:25.4,ft:304.8,kg:1,lb:0.453592};
+  const fromMM={mm:1,cm:0.1,m:0.001,inch:1/25.4,ft:1/304.8,kg:1,lb:1/0.453592};
+  const cats={length:['mm','cm','m','inch','ft'],weight:['kg','lb']};
+  const fromCat=cats.length.includes(from)?'length':'weight';
+  const toCat=cats.length.includes(to)?'length':'weight';
+  if(fromCat!==toCat){r.style.display='block';r.textContent='Não é possível converter entre categorias diferentes.';return;}
+  const result=val*toMM[from]*fromMM[to];
+  r.style.display='block';
+  r.textContent=`${val} ${from} = ${result.toFixed(4)} ${to}`;
+}
+
+function calcAngulo(){
+  const w=parseFloat(document.getElementById('t_aw').value)||0;
+  const h=parseFloat(document.getElementById('t_ah').value)||0;
+  const r=document.getElementById('r_ang');
+  if(!w||!h){r.style.display='block';r.textContent='Preenche largura e altura.';return;}
+  const diag=Math.sqrt(w*w+h*h);
+  const ang=Math.atan2(h,w)*180/Math.PI;
+  const ang2=90-ang;
+  r.style.display='block';
+  r.textContent=`Diagonal: ${diag.toFixed(1)} mm\nÂngulo base: ${ang.toFixed(2)}°\nÂngulo topo: ${ang2.toFixed(2)}°\n\nVerificação quadrado:\nDiferença diagonais deve ser 0 se quadrado.`;
+}
+
+// ── PLANNER ──
+function loadTasks(){
+  try{const s=localStorage.getItem('j2tasks');if(s)tasks=JSON.parse(s);}catch(x){}
+  renderTasks();
+}
+function saveTasks(){try{localStorage.setItem('j2tasks',JSON.stringify(tasks));}catch(x){}}
+function showAddTask(){document.getElementById('taskmodal').style.display='flex';}
+function addTask(){
+  const name=document.getElementById('task_name').value.trim();
+  if(!name) return;
+  tasks.unshift({id:Date.now(),name,notes:document.getElementById('task_notes').value.trim(),cat:document.getElementById('task_cat').value,done:false,date:new Date().toLocaleDateString('pt')});
+  saveTasks();renderTasks();
+  document.getElementById('task_name').value='';
+  document.getElementById('task_notes').value='';
+  document.getElementById('taskmodal').style.display='none';
+}
+function toggleTask(id){
+  const t=tasks.find(t=>t.id===id);if(t)t.done=!t.done;
+  saveTasks();renderTasks();
+}
+function deleteTask(id){
+  tasks=tasks.filter(t=>t.id!==id);
+  saveTasks();renderTasks();
+}
+const catLabels={metal:'⚙ Metal',diy:'🔨 DIY',learn:'📚 Learn',buy:'🛒 Compras',other:'◻ Outro'};
+function renderTasks(){
+  const el=document.getElementById('tasklist');
+  if(!tasks.length){el.innerHTML='<div class="plan-empty">Sem tarefas. Clica em + para adicionar.</div>';return;}
+  el.innerHTML=tasks.map(t=>`
+    <div class="task-item">
+      <div class="task-check ${t.done?'done':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-name ${t.done?'done':''}">${t.name}</div>
+        ${t.notes?`<div class="task-meta">${t.notes}</div>`:''}
+        <div class="task-meta">${catLabels[t.cat]||t.cat} · ${t.date}</div>
+      </div>
+      <button class="task-del" onclick="deleteTask(${t.id})">✕</button>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
